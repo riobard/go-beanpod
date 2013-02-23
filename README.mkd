@@ -1,5 +1,5 @@
 # Beanpod
 
-Golang Beanstalkd client with a friendly interface.
+Golang [Beanstalkd](http://kr.github.com/beanstalkd/) client with a friendly interface.
 
 Documentation available at http://godoc.org/github.com/riobard/go-beanpod
