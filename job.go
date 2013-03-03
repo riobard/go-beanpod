@@ -11,6 +11,13 @@ type JobID uint64
 // Job priority: lower values are more urgent
 type JobPriority uint32
 
+const (
+	PRI_URGENT = JobPriority(0)
+	PRI_HIGH   = JobPriority(0x40000000)
+	PRI_NORMAL = JobPriority(0x80000000)
+	PRI_LOW    = JobPriority(0xFFFFFFFF)
+)
+
 type Job struct {
 	conn *beanstalk.Conn
 	id   uint64
