@@ -40,6 +40,11 @@ func (c *Conn) Put(tube string, body []byte, pri uint32, delay, ttr time.Duratio
 	return JobID(id), nil
 }
 
+// Put a job with normal priority, no delay, and 180 seconds TTR
+func (c *Conn) PutDefault(tube string, body []byte) (JobID, error) {
+	return c.Put(tube, body, uint32(PRI_NORMAL), 0, TTR_NORMAL)
+}
+
 // Get the statistical information about the server. 
 func (c *Conn) Stats() (*Stats, error) {
 	m, err := c.Conn.Stats()

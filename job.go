@@ -18,6 +18,10 @@ const (
 	PRI_LOW    = JobPriority(0xFFFFFFFF)
 )
 
+const (
+	TTR_NORMAL = 3 * time.Minute
+)
+
 type Job struct {
 	conn *beanstalk.Conn
 	id   uint64
