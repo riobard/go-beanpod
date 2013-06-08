@@ -20,12 +20,14 @@ func TestConn(t *testing.T) {
 	log.Printf("ready-jobs = %d", st.ReadyJobs())
 	log.Printf("id = %s", st.ID())
 	log.Printf("hostname = %s", st.Hostname())
+	log.Printf("utime = %v", st.RusageUtime())
+	log.Printf("stime = %v", st.RusageStime())
 
-	j, err := c.Reserve(0)
+	jid, _, err := c.Reserve(0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	s, err := j.Stats()
+	s, err := c.StatsJob(jid)
 	if err != nil {
 		t.Fatal(err)
 	}

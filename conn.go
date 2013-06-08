@@ -5,10 +5,31 @@ import (
 	"time"
 )
 
+// Unique ID of a job assigned by the server.
+type JobID uint64
+
+// Job priority: lower values are more urgent
+type JobPriority uint32
+
+// Pre-defined job priority
+const (
+	PRI_URGENT JobPriority = 0
+	PRI_HIGH               = 0x40000000
+	PRI_NORMAL             = 0x80000000 // default job priority unless specified otherwise
+	PRI_LOW                = 0xFFFFFFFF
+)
+
+// Pre-defined job time-to-run
+const (
+	TTR_NORMAL = 3 * time.Minute
+)
+
+// A connection to Beanstalkd server
 type Conn struct {
 	*beanstalk.Conn
 }
 
+// Create a connection to a Beanstalkd server at addr
 func Dial(addr string) (*Conn, error) {
 	c, err := beanstalk.Dial("tcp", addr)
 	if err != nil {
@@ -18,16 +39,16 @@ func Dial(addr string) (*Conn, error) {
 }
 
 // Reserve and return a job from one of the tubes. If no job is available before time timeout has passed, Reserve returns a ConnError recording ErrTimeout.
-func (c *Conn) Reserve(timeout time.Duration, tubes ...string) (*Job, error) {
+func (c *Conn) Reserve(timeout time.Duration, tubes ...string) (JobID, []byte, error) {
 	if len(tubes) == 0 {
 		tubes = []string{"default"}
 	}
 	ts := beanstalk.NewTubeSet(c.Conn, tubes...)
 	jid, body, err := ts.Reserve(timeout)
 	if err != nil {
-		return nil, unwrap(err)
+		return 0, nil, unwrap(err)
 	}
-	return &Job{id: jid, body: body, conn: c.Conn}, nil
+	return JobID(jid), body, nil
 }
 
 // Put a job into a tube with priority pri and TTR ttr, and returns the id of the newly-created job. If delay is nonzero, the server will wait the given amount of time after returning to the client and before putting the job into the ready queue.
@@ -45,7 +66,7 @@ func (c *Conn) PutDefault(tube string, body []byte) (JobID, error) {
 	return c.Put(tube, body, uint32(PRI_NORMAL), 0, TTR_NORMAL)
 }
 
-// Get the statistical information about the server. 
+// Get the statistical information about the server.
 func (c *Conn) Stats() (*Stats, error) {
 	m, err := c.Conn.Stats()
 	if err != nil {
@@ -54,7 +75,7 @@ func (c *Conn) Stats() (*Stats, error) {
 	return &Stats{m}, nil
 }
 
-// Get the statistical information about a tube. 
+// Get the statistical information about a tube.
 func (c *Conn) StatsTube(tube string) (*TubeStats, error) {
 	t := &beanstalk.Tube{c.Conn, tube}
 	s, err := t.Stats()
@@ -64,7 +85,7 @@ func (c *Conn) StatsTube(tube string) (*TubeStats, error) {
 	return &TubeStats{s}, nil
 }
 
-// Get the statistical information about a job. 
+// Get the statistical information about a job.
 func (c *Conn) StatsJob(id JobID) (*JobStats, error) {
 	m, err := c.Conn.StatsJob(uint64(id))
 	if err != nil {
@@ -83,38 +104,58 @@ func (c *Conn) Kick(tube string, bound int) (int, error) {
 	return n, nil
 }
 
-// Delay any new job being reserved from the tube for a given time. 
+// Delay any new job being reserved from the tube for a given time.
 func (c *Conn) Pause(tube string, dur time.Duration) error {
 	t := &beanstalk.Tube{c.Conn, tube}
 	return unwrap(t.Pause(dur))
 }
 
 // Get a copy of the job in the holding area that would be kicked next by Kick.
-func (c *Conn) PeekBuried(tube string) (*Job, error) {
+func (c *Conn) PeekBuried(tube string) (JobID, []byte, error) {
 	t := &beanstalk.Tube{c.Conn, tube}
 	jid, body, err := t.PeekBuried()
 	if err != nil {
-		return nil, unwrap(err)
+		return 0, nil, unwrap(err)
 	}
-	return &Job{id: jid, body: body, conn: c.Conn}, nil
+	return JobID(jid), body, nil
 }
 
 // Get a copy of the delayed job that is next to be put in t's ready queue.
-func (c *Conn) PeekDelayed(tube string) (*Job, error) {
+func (c *Conn) PeekDelayed(tube string) (JobID, []byte, error) {
 	t := &beanstalk.Tube{c.Conn, tube}
 	jid, body, err := t.PeekDelayed()
 	if err != nil {
-		return nil, unwrap(err)
+		return 0, nil, unwrap(err)
 	}
-	return &Job{id: jid, body: body, conn: c.Conn}, nil
+	return JobID(jid), body, nil
 }
 
 // Get a copy of the job at the front of t's ready queue.
-func (c *Conn) PeekReady(tube string) (*Job, error) {
+func (c *Conn) PeekReady(tube string) (JobID, []byte, error) {
 	t := &beanstalk.Tube{c.Conn, tube}
 	jid, body, err := t.PeekReady()
 	if err != nil {
-		return nil, unwrap(err)
+		return 0, nil, unwrap(err)
 	}
-	return &Job{id: jid, body: body, conn: c.Conn}, nil
+	return JobID(jid), body, nil
+}
+
+// Remove the job from the server entirely. It is normally used by the client when the job has successfully run to completion.
+func (c *Conn) Delete(id JobID) error {
+	return unwrap(c.Conn.Delete(uint64(id)))
+}
+
+// Put the job into the "buried" state. Buried jobs are put into a FIFO linked list and will not be touched by the server again until a client kicks them.
+func (c *Conn) Bury(id JobID, pri JobPriority) error {
+	return unwrap(c.Conn.Bury(uint64(id), uint32(pri)))
+}
+
+// Put the reserved job back into the ready queue (and marks its state as ready) to be run by any client. It is normally used when the job fails because of a transitory error.
+func (c *Conn) Release(id JobID, pri JobPriority, delay time.Duration) error {
+	return unwrap(c.Conn.Release(uint64(id), uint32(pri), delay))
+}
+
+// Request more time to work on the job. This is useful for jobs that potentially take a long time, but you still want the benefits of a TTR pulling a job away from an unresponsive worker. A worker may periodically tell the server that it's still alive and processing a job (e.g. it may do this on DEADLINE_SOON).
+func (c *Conn) Touch(id JobID) error {
+	return unwrap(c.Conn.Touch(uint64(id)))
 }

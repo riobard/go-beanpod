@@ -232,22 +232,22 @@ func (s *Stats) Version() string {
 	return s.m["version"]
 }
 
-// Cumulative user CPU time of this process in seconds and microseconds.
+// Cumulative user CPU time of this process (accuracy: microseconds)
 func (s *Stats) RusageUtime() time.Duration {
-	n, _ := strconv.ParseUint(s.m["rusage-utime"], 10, 64)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["rusage-utime"] + "s")
+	return t
 }
 
-// Cumulative system CPU time of this process in seconds and microseconds.
+// Cumulative system CPU time of the server process (accuracy: microseconds)
 func (s *Stats) RusageStime() time.Duration {
-	n, _ := strconv.ParseUint(s.m["rusage-stime"], 10, 64)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["rusage-stime"] + "s")
+	return t
 }
 
-// Number of seconds since this server process started running.
+// Time since this server process started running.
 func (s *Stats) Uptime() time.Duration {
-	n, _ := strconv.ParseUint(s.m["uptime"], 10, 64)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["uptime"] + "s")
+	return t
 }
 
 // Index of the oldest binlog file needed to store the current jobs.
@@ -290,7 +290,7 @@ func (s *Stats) Hostname() string {
 	return s.m["hostname"]
 }
 
-// Statistical information about a tube. 
+// Statistical information about a tube.
 type TubeStats struct {
 	m map[string]string
 }
@@ -354,10 +354,10 @@ func (s *TubeStats) Watching() int {
 	return int(n)
 }
 
-// Number of seconds the tube has been paused for.
+// Time the tube has been paused for.
 func (s *TubeStats) Pause() time.Duration {
-	n, _ := strconv.ParseUint(s.m["pause"], 10, 32)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["pause"] + "s")
+	return t
 }
 
 // Cumulative number of delete commands for this tube
@@ -372,10 +372,10 @@ func (s *TubeStats) PauseTubeCmds() int {
 	return int(n)
 }
 
-// Number of seconds until the tube is un-paused.
+// Period of time until the tube is un-paused.
 func (s *TubeStats) PauseTimeLeft() time.Duration {
-	n, _ := strconv.ParseUint(s.m["pause-time-left"], 10, 32)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["pause-time-left"] + "s")
+	return t
 }
 
 // Statistical information about a job.
@@ -405,28 +405,28 @@ func (s *JobStats) Pri() uint32 {
 	return uint32(n)
 }
 
-// Time in seconds since the put command that created this job.
+// Time since the put command that created this job.
 func (s *JobStats) Age() time.Duration {
-	n, _ := strconv.ParseUint(s.m["age"], 10, 64)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["age"] + "s")
+	return t
 }
 
-// Number of seconds left until the server puts this job into the ready queue. This number is only meaningful if the job is reserved or delayed. If the job is reserved and this amount of time elapses before its state changes, it is considered to have timed out.
+// Time left until the server puts this job into the ready queue. This number is only meaningful if the job is reserved or delayed. If the job is reserved and this amount of time elapses before its state changes, it is considered to have timed out.
 func (s *JobStats) TimeLeft() time.Duration {
-	n, _ := strconv.ParseUint(s.m["time-left"], 10, 64)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["time-left"] + "s")
+	return t
 }
 
-// Time in seconds that the job is delayed. 
+// Time that the job is delayed.
 func (s *JobStats) Delay() time.Duration {
-	n, _ := strconv.ParseUint(s.m["delay"], 10, 64)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["delay"] + "s")
+	return t
 }
 
-// Time to run in seconds. 
+// Time to run.
 func (s *JobStats) TTR() time.Duration {
-	n, _ := strconv.ParseUint(s.m["ttr"], 10, 64)
-	return time.Duration(n) * time.Second
+	t, _ := time.ParseDuration(s.m["ttr"] + "s")
+	return t
 }
 
 // Number of the earliest binlog file containing this job. If -b wasn't used, this will be 0.

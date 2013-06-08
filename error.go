@@ -22,6 +22,7 @@ var (
 	ErrTooLong    = beanstalk.ErrTooLong
 )
 
+// Unwrap a beanstalk error into plain erros
 func unwrap(err error) error {
 	if connErr, ok := err.(beanstalk.ConnError); ok {
 		return connErr.Err
