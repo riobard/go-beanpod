@@ -3,7 +3,6 @@ package beanpod
 import (
 	"log"
 	"testing"
-	"time"
 )
 
 func TestConn(t *testing.T) {
@@ -22,7 +21,7 @@ func TestConn(t *testing.T) {
 	log.Printf("id = %s", st.ID())
 	log.Printf("hostname = %s", st.Hostname())
 
-	j, err := c.Reserve(1 * time.Second)
+	j, err := c.Reserve(0)
 	if err != nil {
 		t.Fatal(err)
 	}
