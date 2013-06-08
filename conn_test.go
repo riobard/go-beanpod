@@ -3,6 +3,7 @@ package beanpod
 import (
 	"log"
 	"testing"
+	"time"
 )
 
 func TestConn(t *testing.T) {
@@ -18,10 +19,10 @@ func TestConn(t *testing.T) {
 
 	log.Printf("urgent-jobs = %d", st.UrgentJobs())
 	log.Printf("ready-jobs = %d", st.ReadyJobs())
-	log.Printf("id = %s", st.Id())
+	log.Printf("id = %s", st.ID())
 	log.Printf("hostname = %s", st.Hostname())
 
-	j, err := c.Reserve(0)
+	j, err := c.Reserve(1 * time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,10 +32,10 @@ func TestConn(t *testing.T) {
 	}
 	log.Printf("%s", s)
 
-	log.Printf("id = %v", s.Id())
+	log.Printf("id = %v", s.ID())
 	log.Printf("tube = %v", s.Tube())
 	log.Printf("state = %v", s.State())
-	log.Printf("pri = %v", s.Priority())
+	log.Printf("pri = %v", s.Pri())
 	log.Printf("age = %v", s.Age())
 	log.Printf("time-left = %v", s.TimeLeft())
 	log.Printf("delay = %v", s.Delay())
