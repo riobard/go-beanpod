@@ -400,9 +400,9 @@ func (s *JobStats) State() string {
 }
 
 // Priority value set by the put, release, or bury commands.
-func (s *JobStats) Pri() uint32 {
+func (s *JobStats) Pri() JobPriority {
 	n, _ := strconv.ParseUint(s.m["pri"], 10, 32)
-	return uint32(n)
+	return JobPriority(n)
 }
 
 // Time since the put command that created this job.
