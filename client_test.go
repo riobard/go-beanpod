@@ -6,10 +6,7 @@ import (
 )
 
 func TestConn(t *testing.T) {
-	c, err := Dial("localhost:11300")
-	if err != nil {
-		t.Fatal(err)
-	}
+	c := New("localhost:11300")
 	st, err := c.Stats()
 	if err != nil {
 		t.Fatal(err)
