@@ -48,7 +48,9 @@ func (c *Client) Close() error {
 	if c.Conn == nil {
 		return nil
 	}
-	return c.Conn.Close()
+	err := c.Conn.Close()
+	c.Conn = nil
+	return err
 }
 
 // Reserve and return a job from one of the tubes. If no job is available before time timeout has passed, Reserve returns a ConnError recording ErrTimeout.
